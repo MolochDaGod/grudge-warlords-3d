@@ -11,7 +11,8 @@
  * Palette texture (256×1 PNG) drives skin/armor color variants per race.
  */
 
-import type { EquipmentAppearance } from './voxel-equipment';
+// Stub: EquipmentAppearance for 3D project (voxel-equipment is 2D-only)
+export type EquipmentAppearance = Record<string, any>;
 
 // ── Types ──────────────────────────────────────────────────────
 

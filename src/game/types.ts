@@ -138,8 +138,8 @@ export interface MobaHero extends GameEntity {
   killStreak: number;
   attributes?: import('./attributes').PlayerAttributes;
   derivedStats?: import('./attributes').DerivedStats;
-  activeAuras: import('./aura-system').ActiveAura[];
-  auraModifiers?: import('./aura-system').AuraStatModifiers;
+  activeAuras: any[];
+  auraModifiers?: any;
 }
 
 export interface MobaMinion extends GameEntity {
@@ -227,7 +227,7 @@ export interface SpellProjectile {
   maxLife: number;
   spellName: string;
   aoeRadius: number;
-  trailImage?: import('./trail-effects').TrailColor;
+  trailImage?: string;
 }
 
 export type ProjectileStyle = 'default' | 'spinning_axe' | 'arrow_long' | 'magic_orb' | 'worg_fang';
@@ -247,7 +247,7 @@ export interface Projectile {
   projStyle?: ProjectileStyle;
   trailColor?: string;
   spawnTime?: number;
-  trailImage?: import('./trail-effects').TrailColor;
+  trailImage?: string;
 }
 
 export interface Particle {
@@ -313,7 +313,7 @@ export interface MobaState {
   areaDamageZones: AreaDamageZoneState[];
   pendingSpriteEffects: { type: string; x: number; y: number; scale: number; duration: number }[];
   firstBloodClaimed: boolean;
-  activeSpells: import('./spell-system').ActiveSpell[];
+  activeSpells: any[];
 }
 
 export interface AreaDamageZoneState {

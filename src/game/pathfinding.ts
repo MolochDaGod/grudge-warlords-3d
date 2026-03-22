@@ -325,7 +325,13 @@ export function generateLinearPatrol(
 // ── Dungeon Pathfinding Adapter ────────────────────────────────
 // Uses DungeonGrid instead of WorldHeightmap. Same A* algorithm.
 
-import type { DungeonGrid } from './dungeon-grid';
+// Stub: DungeonGrid not used in 3D project
+interface DungeonGrid {
+  width: number; height: number; cells: number[][];
+  isGridWalkable(tx: number, ty: number): boolean;
+  getGridCost(tx: number, ty: number): number;
+  hasLineOfSight(x1: number, y1: number, x2: number, y2: number): boolean;
+}
 
 const DUNGEON_CELL = 40; // matches TILE_SIZE in dungeon-grid.ts
 
