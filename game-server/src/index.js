@@ -15,9 +15,9 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',          // Vite dev
-    'http://localhost:3000',          // Express dev
-    'https://dungeon-crawler-quest.vercel.app',
-    process.env.ALLOWED_ORIGIN,       // custom override
+    'http://localhost:3000',          // Local dev
+    'https://grudge-warlords-3d.vercel.app',
+    process.env.ALLOWED_ORIGIN,       // custom override via env
   ].filter(Boolean),
   credentials: true,
 }));
