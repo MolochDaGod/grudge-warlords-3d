@@ -250,12 +250,11 @@ async function loadWeaponModel(modelKey: string): Promise<THREE.Group> {
         if ((child as THREE.Mesh).isMesh) {
           child.castShadow = true;
           const mat = (child as THREE.Mesh).material;
-          const applyPalette = (m: THREE.Material) => {
-            if ((m as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
-              (m as THREE.MeshStandardMaterial).map = palette;
-              (m as THREE.MeshStandardMaterial).needsUpdate = true;
-            }
-          };
+      const applyPalette = (m: THREE.Material) => {
+          // FBXLoader produces MeshPhongMaterial — use (m as any) to cover both Phong and Standard
+          (m as any).map = palette;
+          (m as any).needsUpdate = true;
+        };
           if (Array.isArray(mat)) mat.forEach(applyPalette);
           else applyPalette(mat);
         }

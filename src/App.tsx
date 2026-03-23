@@ -19,6 +19,7 @@ import { applyRace, RACE_CONFIGS } from './engine/race-mods';
 import { recolorPalette } from './engine/race-mods';
 import { equipClassStartingWeapons } from './engine/weapon-attach';
 import { setupCharacterAnimations } from './engine/animation-bind';
+import { syncCharacterToBackend } from './game/grudge-api';
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -63,6 +64,8 @@ export default function App() {
     setCharacter(char);
     localStorage.setItem('grudge3d_character', JSON.stringify(char));
     setPhase('loading');
+    // Non-blocking backend sync (requires grudge_jwt in localStorage)
+    syncCharacterToBackend(char).catch(() => {});
   }, []);
 
   if (phase === 'character-create') {
@@ -174,17 +177,28 @@ function GameWorld({ character }: { character: CharacterData }) {
         recolorPalette(charInstance, character.skinColor, RACE_CONFIGS[character.race]?.accentColor || '#4a3020');
       }
 
-      // Attach class starting weapons
-      await equipClassStartingWeapons(charInstance, character.heroClass);
-
-      // Wire animations
-      const animComp = player.getComponent(AnimationComponent)!;
-      await setupCharacterAnimations(charInstance, character.heroClass, animComp);
-
+      // Always add the voxel model first — weapons & animations are non-fatal enhancements
       renderComp.group.add(charInstance.group);
       renderComp.modelLoaded = true;
       setLoading(false);
-    }).catch(() => {
+
+      // Attach class starting weapons (non-fatal — capsule never shown if only this fails)
+      try {
+        await equipClassStartingWeapons(charInstance, character.heroClass);
+      } catch (e) {
+        console.warn('[GameWorld] Weapon equip failed (non-fatal):', e);
+      }
+
+      // Wire animations (non-fatal)
+      try {
+        const animComp = player.getComponent(AnimationComponent)!;
+        await setupCharacterAnimations(charInstance, character.heroClass, animComp);
+      } catch (e) {
+        console.warn('[GameWorld] Animation setup failed (non-fatal):', e);
+      }
+    }).catch((e) => {
+      // Only fall back if the character FBX itself failed to load
+      console.error('[GameWorld] Character FBX load failed, using fallback capsule:', e);
       addFallbackCapsule(renderComp.group, character.heroClass);
       setLoading(false);
     });
@@ -255,6 +269,17 @@ function GameWorld({ character }: { character: CharacterData }) {
       }}>
         WASD Move · Shift Sprint · Space Dodge
       </div>
+
+      {/* Arena mode shortcut */}
+      <button onClick={() => {
+        window.history.pushState({}, '', '/arena');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }} style={{
+        position: 'absolute', top: 12, right: 12, padding: '5px 12px', borderRadius: 4,
+        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+        color: '#ef4444', fontSize: 10, cursor: 'pointer', fontFamily: FONT,
+        letterSpacing: '0.1em',
+      }}>⚔ ARENA MODE</button>
 
       {/* New character button */}
       <button onClick={() => { localStorage.removeItem('grudge3d_character'); window.location.reload(); }} style={{
