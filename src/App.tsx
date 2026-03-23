@@ -39,11 +39,24 @@ type GamePhase = 'character-create' | 'loading' | 'playing';
 
 export default function App() {
   const [phase, setPhase] = useState<GamePhase>(() => {
-    const saved = localStorage.getItem('grudge3d_character');
-    return saved ? 'loading' : 'character-create';
+    // Validate saved character has new format fields
+    try {
+      const raw = localStorage.getItem('grudge3d_character');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.bodyTypeId !== undefined && parsed.skinColor) return 'loading';
+      }
+    } catch { /* ignore */ }
+    // Old or missing data — clear and start fresh
+    localStorage.removeItem('grudge3d_character');
+    return 'character-create';
   });
   const [character, setCharacter] = useState<CharacterData | null>(() => {
-    try { return JSON.parse(localStorage.getItem('grudge3d_character') || 'null'); } catch { return null; }
+    try {
+      const parsed = JSON.parse(localStorage.getItem('grudge3d_character') || 'null');
+      if (parsed && parsed.bodyTypeId !== undefined && parsed.skinColor) return parsed;
+    } catch { /* ignore */ }
+    return null;
   });
 
   const handleCreate = useCallback((char: CharacterData) => {
