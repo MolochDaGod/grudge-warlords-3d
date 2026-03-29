@@ -3,7 +3,7 @@
  * Tabs: Shop (buy/sell), Quests (accept/claim), Train (respec), Craft (recipes)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { MutableRefObject } from 'react';
 import type { OpenWorldState, OWHudState, NPCDialogTab, ActiveNPCDialog } from '@/game/open-world';
 import { closeNPCDialog, acceptOWMission, claimOWMission } from '@/game/open-world';
@@ -17,6 +17,7 @@ import { isRegistryLoaded, getIconUrl, OS_BASE } from '@/game/grudge-items';
 import { getAvailableRecipes, executeCraft, CraftingRecipe } from '@/game/crafting';
 import { ATTRIBUTES, getAttr } from '@/game/attributes';
 import { ISLAND_ZONES } from '@/game/zones';
+import { generateNPCDialogue, isPuterAvailable } from '@/game/puter-cloud';
 import css from './NpcDialog.module.css';
 
 // ── NPC Type Icons ────────────────────────────────────────────
@@ -52,11 +53,22 @@ export default function NpcDialog({ activeNPC, hud, stateRef }: Props) {
   const zone = ISLAND_ZONES.find(z => z.id === npc.zoneId);
   const zoneName = zone?.name || 'Unknown';
 
-  // Greeting text
-  const greeting = useMemo(
+  // Greeting text — use AI-generated dialogue when Puter is available, static fallback otherwise
+  const staticGreeting = useMemo(
     () => npc.dialogue[Math.floor(Math.random() * npc.dialogue.length)] || '',
     [npc.dialogue],
   );
+  const [greeting, setGreeting] = useState(staticGreeting);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isPuterAvailable()) return;
+    setAiLoading(true);
+    const playerCtx = `Level ${hud.level} ${hud.heroRace} ${hud.heroClass} named ${hud.heroName} in ${zoneName}`;
+    generateNPCDialogue(npc.name, npc.type, playerCtx)
+      .then(text => { if (text) setGreeting(text); })
+      .finally(() => setAiLoading(false));
+  }, [npc.name, npc.type, hud.level, hud.heroRace, hud.heroClass, hud.heroName, zoneName]);
 
   const handleClose = () => {
     if (stateRef.current) closeNPCDialog(stateRef.current);
@@ -78,7 +90,12 @@ export default function NpcDialog({ activeNPC, hud, stateRef }: Props) {
         </div>
 
         {/* Greeting */}
-        {greeting && <div className={css.greeting}>"{greeting}"</div>}
+        {greeting && (
+          <div className={css.greeting}>
+            "{greeting}"
+            {aiLoading && <span style={{ fontSize: 9, color: '#6b5535', marginLeft: 6 }}>✦ thinking…</span>}
+          </div>
+        )}
 
         {/* Tab strip */}
         <div className={css.tabStrip}>

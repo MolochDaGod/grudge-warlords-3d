@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { World } from './engine/ecs';
@@ -20,6 +20,9 @@ import { recolorPalette } from './engine/race-mods';
 import { equipClassStartingWeapons } from './engine/weapon-attach';
 import { setupCharacterAnimations } from './engine/animation-bind';
 import { syncCharacterToBackend } from './game/grudge-api';
+import { isPuterAvailable, syncPlayerToCloud, loadPlayerFromCloud } from './game/puter-cloud';
+
+const SettingsMenu = lazy(() => import('./components/SettingsMenu'));
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -84,6 +87,8 @@ export default function App() {
 function GameWorld({ character }: { character: CharacterData }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const cloudSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -235,10 +240,27 @@ function GameWorld({ character }: { character: CharacterData }) {
     // Init Rapier in background
     RAPIER.init().catch(() => {});
 
+    // Cloud sync — attempt load on init, then save every 30s
+    if (isPuterAvailable()) {
+      loadPlayerFromCloud().then(data => {
+        if (data) console.log('[CloudSync] Loaded player data from Puter KV');
+      }).catch(() => {});
+
+      cloudSyncRef.current = setInterval(() => {
+        syncPlayerToCloud({
+          attributes: JSON.parse(localStorage.getItem('grudge_player_attributes') || 'null'),
+          equipment: JSON.parse(localStorage.getItem('grudge_player_equipment') || 'null'),
+          professions: JSON.parse(localStorage.getItem('grudge_player_professions') || 'null'),
+          resources: JSON.parse(localStorage.getItem('grudge_resources') || 'null'),
+        }).catch(() => {});
+      }, 30_000);
+    }
+
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', onResize);
       renderer.dispose();
+      if (cloudSyncRef.current) clearInterval(cloudSyncRef.current);
     };
   }, [character]);
 
@@ -270,16 +292,23 @@ function GameWorld({ character }: { character: CharacterData }) {
         WASD Move · Shift Sprint · Space Dodge
       </div>
 
-      {/* Arena mode shortcut */}
-      <button onClick={() => {
-        window.history.pushState({}, '', '/arena');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }} style={{
-        position: 'absolute', top: 12, right: 12, padding: '5px 12px', borderRadius: 4,
-        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-        color: '#ef4444', fontSize: 10, cursor: 'pointer', fontFamily: FONT,
-        letterSpacing: '0.1em',
-      }}>⚔ ARENA MODE</button>
+      {/* Top-right buttons */}
+      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
+        <button onClick={() => setShowSettings(true)} style={{
+          padding: '5px 12px', borderRadius: 4,
+          background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)',
+          color: '#c5a059', fontSize: 10, cursor: 'pointer', fontFamily: FONT,
+        }}>⚙ Settings</button>
+        <button onClick={() => {
+          window.history.pushState({}, '', '/arena');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }} style={{
+          padding: '5px 12px', borderRadius: 4,
+          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+          color: '#ef4444', fontSize: 10, cursor: 'pointer', fontFamily: FONT,
+          letterSpacing: '0.1em',
+        }}>⚔ ARENA</button>
+      </div>
 
       {/* New character button */}
       <button onClick={() => { localStorage.removeItem('grudge3d_character'); window.location.reload(); }} style={{
@@ -295,6 +324,13 @@ function GameWorld({ character }: { character: CharacterData }) {
         }}>
           LOADING {character.race.toUpperCase()} {character.heroClass.toUpperCase()}...
         </div>
+      )}
+
+      {/* Settings overlay */}
+      {showSettings && (
+        <Suspense fallback={null}>
+          <SettingsMenu onClose={() => setShowSettings(false)} />
+        </Suspense>
       )}
     </div>
   );

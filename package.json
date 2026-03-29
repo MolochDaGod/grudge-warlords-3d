@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "server": "cd game-server && node src/index.js"
+    "server": "cd game-server && node src/index.js",
+    "deploy:puter": "npm run build && node scripts/deploy-puter.js",
+    "deploy:puter:update": "npm run build && node scripts/deploy-puter.js --update"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.14.0",
