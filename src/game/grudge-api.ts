@@ -119,6 +119,10 @@ export async function syncCharacterToBackend(char: Grudge3DCharacter): Promise<B
     const listResp = await fetch(`${GAME_API_BASE}/characters`, {
       headers: getAuthHeaders(),
     });
+    if (listResp.status === 401 || listResp.status === 403) {
+      // JWT is invalid or expired — skip POST to avoid noisy failing requests
+      return null;
+    }
     if (listResp.ok) {
       const existing: BackendCharacter[] = await listResp.json();
       const match = existing.find(
