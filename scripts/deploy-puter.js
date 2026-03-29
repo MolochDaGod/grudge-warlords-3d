@@ -60,12 +60,25 @@ console.log(`   Source: ${DIST}`);
 console.log(`   Mode:   ${isUpdate ? 'UPDATE' : 'CREATE'}\n`);
 
 try {
+  let result;
   if (isUpdate) {
     // Update existing app with new files from dist/
-    execSync(`puter app:update ${APP_NAME} "${DIST}"`, { stdio: 'inherit', cwd: ROOT });
+    result = execSync(`puter app:update ${APP_NAME} "${DIST}"`, { encoding: 'utf-8', cwd: ROOT });
   } else {
     // Create new app from dist/ directory
-    execSync(`puter app:create ${APP_NAME} "${DIST}" --description="Grudge Warlords 3D MMO"`, { stdio: 'inherit', cwd: ROOT });
+    result = execSync(`puter app:create ${APP_NAME} "${DIST}" --description="Grudge Warlords 3D MMO"`, { encoding: 'utf-8', cwd: ROOT });
+  }
+
+  console.log(result);
+
+  // puter-cli may exit 0 even on failure — check output for errors
+  if (result && (result.includes('Failed to create') || result.includes('Error:'))) {
+    console.error('\n❌ Deploy failed. puter-cli reported an error (see above).');
+    console.error('   Make sure you are logged in: puter login');
+    if (!isUpdate) {
+      console.error('   If the app already exists, use: node scripts/deploy-puter.js --update');
+    }
+    process.exit(1);
   }
 
   console.log(`\n✅ Deployed! Your app should be live at:`);
