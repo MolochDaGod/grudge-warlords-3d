@@ -119,6 +119,8 @@ export default function Arena() {
           style={{ width: '100%', height: '100%', border: 'none' }}
           title="Grudge Warlords Arena"
           allow="autoplay; fullscreen"
+          sandbox="allow-scripts allow-same-origin"
+          referrerPolicy="no-referrer"
         />
         <button
           onClick={() => setMode('lobby')}
