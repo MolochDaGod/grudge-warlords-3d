@@ -3,6 +3,15 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import App from './App';
 
 const ToonAdmin = lazy(() => import('./pages/ToonAdmin'));
+const Arena = lazy(() => import('./pages/Arena'));
+
+const LOADING_SCREEN = (
+  <div style={{
+    color: '#c5a059', background: '#0a0a1a', height: '100%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: "'Oxanium', sans-serif",
+  }}>Loading...</div>
+);
 
 function Root() {
   const [path, setPath] = useState(window.location.pathname);
@@ -15,8 +24,16 @@ function Root() {
 
   if (path === '/toonadmin') {
     return (
-      <Suspense fallback={<div style={{ color: '#c5a059', background: '#0a0a1a', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>Loading ToonAdmin...</div>}>
+      <Suspense fallback={LOADING_SCREEN}>
         <ToonAdmin />
+      </Suspense>
+    );
+  }
+
+  if (path === '/arena' || path === '/arena/') {
+    return (
+      <Suspense fallback={LOADING_SCREEN}>
+        <Arena />
       </Suspense>
     );
   }
