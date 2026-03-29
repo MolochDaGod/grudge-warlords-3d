@@ -31,19 +31,33 @@ export default defineConfig({
          * until the code actually changes.
          */
         manualChunks(id) {
-          // Babylon.js core engine — largest chunk, changes rarely
+          // ── Babylon.js ecosystem (split by package for granular caching) ──
           if (id.includes("@babylonjs/core")) return "vendor-babylon";
           if (id.includes("@babylonjs/gui")) return "vendor-babylon-gui";
           if (id.includes("@babylonjs/loaders")) return "vendor-babylon-loaders";
-          // Three.js — existing game engine
+          if (id.includes("@babylonjs/materials")) return "vendor-babylon-materials";
+          if (id.includes("@babylonjs/havok")) return "vendor-babylon-havok";
+          if (id.includes("@babylonjs/inspector")) return "vendor-babylon-inspector";
+          if (id.includes("@babylonjs/post-processes")) return "vendor-babylon-postfx";
+          if (id.includes("@babylonjs/procedural-textures")) return "vendor-babylon-proctex";
+          if (id.includes("@babylonjs/serializers")) return "vendor-babylon-serializers";
+          // ── Three.js ──
           if (id.includes("node_modules/three")) return "vendor-three";
-          // React runtime
+          // ── React ──
           if (id.includes("node_modules/react-dom")) return "vendor-react-dom";
           if (id.includes("node_modules/react") && !id.includes("react-dom")) return "vendor-react";
-          // Colyseus networking
+          // ── Networking ──
           if (id.includes("colyseus")) return "vendor-colyseus";
-          // Physics
+          if (id.includes("socket.io")) return "vendor-socketio";
+          // ── Physics ──
           if (id.includes("rapier")) return "vendor-rapier";
+          // ── ECS / State / Audio ──
+          if (id.includes("bitecs")) return "vendor-bitecs";
+          if (id.includes("zustand")) return "vendor-zustand";
+          if (id.includes("howler")) return "vendor-howler";
+          // ── Shader / Debug tools (editor only, lazy loaded) ──
+          if (id.includes("spectorjs")) return "vendor-spector";
+          if (id.includes("glsl-parser")) return "vendor-glsl";
         },
       },
     },
