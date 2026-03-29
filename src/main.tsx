@@ -30,7 +30,7 @@ function Root() {
     );
   }
 
-  if (path === '/arena') {
+  if (path === '/arena' || path === '/arena/') {
     return (
       <Suspense fallback={LOADING_SCREEN}>
         <Arena />
