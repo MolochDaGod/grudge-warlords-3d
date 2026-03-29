@@ -181,9 +181,14 @@ export default function Arena() {
             {' · '}
             <span style={{ color: CLASS_COLORS[char.heroClass] }}>{char.heroClass}</span>
             {' · '}
-            <span style={{ color: FACTION_COLORS[FACTIONS[char.race]] }}>
-              {FACTIONS[char.race]}
-            </span>
+            {(() => {
+              const faction = FACTIONS[char.race] || 'Crusade';
+              return (
+                <span style={{ color: FACTION_COLORS[faction] }}>
+                  {faction}
+                </span>
+              );
+            })()}
           </div>
         </div>
       ) : (
